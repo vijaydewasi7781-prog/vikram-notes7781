@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Vikram Notes Website</title>
+
+<style>
+body{
+  font-family:Arial;
+  background:#111;
+  color:white;
+  text-align:center;
+  padding:20px;
+}
+
+.card{
+  background:#222;
+  padding:20px;
+  margin:15px auto;
+  width:300px;
+  border-radius:12px;
+}
+
+button{
+  padding:10px 15px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  background:gold;
+}
+
+input{
+  padding:10px;
+  width:80%;
+  margin:5px;
+}
+</style>
+</head>
+<body>
+
+<h1>📚 Notes Website</h1>
+
+<!-- LOGIN -->
+<div class="card" id="loginBox">
+  <h3>Owner Login</h3>
+  <input type="email" id="email" placeholder="Email"><br>
+  <input type="password" id="password" placeholder="Password"><br>
+  <button onclick="login()">Login</button>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="card" id="adminPanel" style="display:none;">
+  <h3>Upload PDF</h3>
+  <input type="file" id="file"><br>
+  <button onclick="uploadFile()">Upload</button>
+</div>
+
+<!-- NOTES LIST -->
+<div class="card">
+  <h3>Available Notes</h3>
+  <div id="notes">Loading...</div>
+</div>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getStorage, ref, uploadBytes, getDownloadURL, listAll } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAsy2QbOKPmQOqA1_u26gOBsUgnUyB5-aU",
+  authDomain: "vikram-notes.firebaseapp.com",
+  projectId: "vikram-notes",
+  storageBucket: "vikram-notes.appspot.com",
+  messagingSenderId: "1031016902576",
+  appId: "1:1031016902576:web:2245b1a8b9bd094971f075"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const storage = getStorage(app);
+
+// LOGIN
+window.login = function(){
+  let email = document.getElementById("email").value;
+  let password = document.getElementById("password").value;
+
+  signInWithEmailAndPassword(auth, email, password)
+  .then(()=>{
+    alert("Login Success");
+    document.getElementById("loginBox").style.display="none";
+    document.getElementById("adminPanel").style.display="block";
+  })
+  .catch(()=> alert("Wrong Login"));
+}
+
+// UPLOAD FILE
+window.uploadFile = function(){
+  let file = document.getElementById("file").files[0];
+  let fileRef = ref(storage, file.name);
+
+  uploadBytes(fileRef, file).then(()=>{
+    alert("Uploaded!");
+    loadNotes();
+  });
+}
+
+// LOAD FILES
+function loadNotes(){
+  const notesDiv = document.getElementById("notes");
+  notesDiv.innerHTML = "";
+
+  const storageRef = ref(storage);
+
+  listAll(storageRef).then(res=>{
+    res.items.forEach(async (itemRef)=>{
+      let url = await getDownloadURL(itemRef);
+
+      notesDiv.innerHTML += `
+        <p>
+          📄 ${itemRef.name} <br>
+          <a href="${url}" target="_blank">
+            <button>Download</button>
+          </a>
+        </p>
+      `;
+    });
+  });
+}
+
+loadNotes();
+</script>
+
+</body>
+</html>
